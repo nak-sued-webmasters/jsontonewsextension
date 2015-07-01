@@ -1,0 +1,2 @@
+php.exe cli_dispatch.phpsh extbase jsonimport:importjson
+php.exe cli_dispatch.phpsh extbase jsonimport:movepictures
