@@ -34,7 +34,7 @@ class JsonImportCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Comm
 		print('Start import JSON File');
 		$migrate = $this->objectManager->get('NakSued\\NewsJsonimport\\Jobs\\JSONNewsImportJob');
 		$migrate->setImportFile($this->importFile);
-		$fo = $migrate->run();
+		$fo = $migrate->run(0);
 		$this->outputLine($fo);	
 	}
 	
@@ -55,7 +55,7 @@ class JsonImportCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Comm
 		$filecontent 			= file_get_contents($this->importFile);
 		$content 				= json_decode($filecontent, true);
 		$resourceDestination 	= $content["resourceDestination"];
-		
+		print($resourceDestination);
 		$folder = $storage->getFolder($this->importFolder);
 		$files 	= $folder->getFiles();
 		
@@ -68,8 +68,7 @@ class JsonImportCommandController extends \TYPO3\CMS\Extbase\Mvc\Controller\Comm
 		
 		for ($i = 0; $i < $numberOfArticles; $i++) {
 			
-			$media = $content["articles"][$i]["media"];
-			$images = explode(",", $media);
+			$images = $content["articles"][$i]["media"];
 			
 			foreach ($images as $image) {
 			

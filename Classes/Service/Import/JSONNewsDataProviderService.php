@@ -71,24 +71,33 @@ class JSONNewsDataProviderService implements \Tx_News_Service_Import_DataProvide
 		$filecontent = file_get_contents($this->importFile);
 		$content = json_decode($filecontent, true);
 		
+		
+		// TODO mapping Table
+		$destinationpage = 0;
+		switch ($content["destrict"]) {
+			case "Heidelberg":
+				$destinationpage = 37;
+				break;
+		}		
+		
 		$numberOfArticles = (int)count($content["articles"]);
 		
 		for ($i = 0; $i < $numberOfArticles; $i++) {
 			$importData[] = array(
-				'pid' => 				$content["articles"][$i]["pid"],
+				'pid' => 				$destinationpage,
 				'hidden' => 			$content["articles"][$i]["hidden"],
-				'tstamp' => 			$content["articles"][$i]["tstamp"],
-				'crdate' => 			$content["articles"][$i]["crdate"],
+				'tstamp' => 			$this->getUnixTimestamp($content["articles"][$i]["tstamp"]),
+				'crdate' => 			$this->getUnixTimestamp($content["articles"][$i]["crdate"]),
 				'cruser_id' => 			$content["articles"][$i]["cruser_id"],
 				'l10n_parent' => 		$content["articles"][$i]["l10n_parent"],
 				'sys_language_uid' => 	$content["articles"][$i]["sys_language_uid"],
-				'starttime' => 			$content["articles"][$i]["starttime"],
+				'starttime' => 			$this->getUnixTimestamp($content["articles"][$i]["starttime"]),
 				'endtime'  => 			$content["articles"][$i]["endtime"],
 				'title' => 				$content["articles"][$i]["title"],
 				'teaser' => 			$content["articles"][$i]["teaser"],
 				'bodytext' => 			$content["articles"][$i]["bodytext"],
-				'datetime' => 			$content["articles"][$i]["datetime"],
-				'archive' => 			$content["articles"][$i]["archive"],
+				'datetime' => 			$this->getUnixTimestamp($content["articles"][$i]["datetime"]),
+				'archive' => 			$this->getUnixTimestamp($content["articles"][$i]["archive"]),
 				'author' => 			$content["articles"][$i]["author"],
 				'author_email' => 		$content["articles"][$i]["author_email"],
 				'type' => 				$content["articles"][$i]["type"],
@@ -106,6 +115,11 @@ class JSONNewsDataProviderService implements \Tx_News_Service_Import_DataProvide
 		return $importData;
 	}
 	
+	protected function getUnixTimestamp($dateString) {
+		$timestamp = strtotime($dateString);
+		return $timestamp;
+	}
+	
 	/**
 	 * Get correct categories from string
 	 *
@@ -113,12 +127,13 @@ class JSONNewsDataProviderService implements \Tx_News_Service_Import_DataProvide
 	 * @return array
 	 */
 	protected function getCategories($categories) {
+	
 		$categoryids = array();
 		// TODO Robustheit bei mehreren Kategorien - behandlung von , und " die nicht gewollt sind
 		// TODO Source Page
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery('*',
 			'sys_category',
-			'title IN ("'.str_replace(',','","',$categories).'")');
+			'title IN ("'.implode('","', $categories).'")');
 			
 		while ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
 			$categoryids[] = $row['uid'];
@@ -140,16 +155,13 @@ class JSONNewsDataProviderService implements \Tx_News_Service_Import_DataProvide
 		
 		// TODO check dass beide Arrays gleich groß sind
 		
-		$imagesArray = explode(",", $images);
-		$descriptionsArray = explode(",", $descriptions);
-
 		$i = 0;		
-		foreach ($imagesArray as $image) {
+		foreach ($images as $image) {
 			$media[] = array(
-				'title' => $descriptionsArray[$i],
-				'alt' => $descriptionsArray[$i],
-				'caption' => $descriptionsArray[$i],
-				'image' => 'uploads/pics/' . $image,
+				'title' => $descriptions[$i],
+				'alt' => $descriptions[$i],
+				'caption' => $descriptions[$i],
+				'image' => 'fileadmin/news_import/' . $image,
 				'type' => 0,
 				'showinpreview' => (int)$count == 0
 			);
